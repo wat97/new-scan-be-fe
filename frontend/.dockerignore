@@ -1,6 +1,6 @@
-# Dockerfile and nginx config shouldn't be served
-Dockerfile
-nginx.conf
+# OS
+.DS_Store
+Thumbs.db
 
 # OS
 .DS_Store
