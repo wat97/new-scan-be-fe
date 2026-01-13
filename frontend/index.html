@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scandata - Warehouse Grade Checker</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <!-- Login Page -->
+    <div id="loginPage" class="page active">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <div class="logo">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                            <polyline points="9,22 9,12 15,12 15,22" />
+                        </svg>
+                    </div>
+                    <h1>Scandata</h1>
+                    <p>Warehouse Grade Checker</p>
+                </div>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required placeholder="Masukkan username">
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required placeholder="Masukkan password">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <span>Login</span>
+                    </button>
+                </form>
+                <div id="loginError" class="error-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="page">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-small">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                    </svg>
+                </div>
+                <span>Scandata</span>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item" data-page="dashboard">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7" />
+                        <rect x="14" y="3" width="7" height="7" />
+                        <rect x="14" y="14" width="7" height="7" />
+                        <rect x="3" y="14" width="7" height="7" />
+                    </svg>
+                    <span>Dashboard</span>
+                </li>
+                <li class="nav-item active" data-page="scanner">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                    </svg>
+                    <span>Scan QR</span>
+                </li>
+                <li class="nav-item" data-page="history">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12,6 12,12 16,14" />
+                    </svg>
+                    <span>Riwayat</span>
+                </li>
+                <li class="nav-item admin-only" data-page="units">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
+                    </svg>
+                    <span>Unit</span>
+                </li>
+                <li class="nav-item admin-only" data-page="users">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 00-3-3.87" />
+                        <path d="M16 3.13a4 4 0 010 7.75" />
+                    </svg>
+                    <span>Users</span>
+                </li>
+                <li class="nav-item admin-only" data-page="reports">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                        <polyline points="14,2 14,8 20,8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                    </svg>
+                    <span>Laporan</span>
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <div class="user-details">
+                        <span id="userName">Admin</span>
+                        <small id="userRole">Administrator</small>
+                    </div>
+                </div>
+                <button class="btn-logout" id="logoutBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                        <polyline points="16,17 21,12 16,7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Mobile Header -->
+        <header class="mobile-header">
+            <span class="logo-text">Scandata</span>
+            <button class="user-btn" id="mobileUserBtn">A</button>
+        </header>
+
+        <!-- Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Bottom Navigation (Mobile) -->
+        <nav class="bottom-nav" id="bottomNav">
+            <ul class="bottom-nav-items">
+                <li class="bottom-nav-item" data-page="dashboard">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7" />
+                        <rect x="14" y="3" width="7" height="7" />
+                        <rect x="14" y="14" width="7" height="7" />
+                        <rect x="3" y="14" width="7" height="7" />
+                    </svg>
+                    <span>Home</span>
+                </li>
+                <li class="bottom-nav-item active" data-page="scanner">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                    </svg>
+                    <span>Scan</span>
+                </li>
+                <li class="bottom-nav-item" data-page="history">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12,6 12,12 16,14" />
+                    </svg>
+                    <span>Riwayat</span>
+                </li>
+                <li class="bottom-nav-item admin-only" data-page="units">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
+                    </svg>
+                    <span>Unit</span>
+                </li>
+                <li class="bottom-nav-item admin-only" data-page="reports">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                        <polyline points="14,2 14,8 20,8" />
+                    </svg>
+                    <span>Laporan</span>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard -->
+            <section id="dashboardPage" class="content-page">
+                <div class="page-header">
+                    <h2>Dashboard</h2>
+                    <p>Ringkasan performa hari ini</p>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon total">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                                <polyline points="22,4 12,14.01 9,11.01" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="statTotalToday">0</h3>
+                            <p>Total Scan Hari Ini</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon match">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20,6 9,17 4,12" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="statMatchToday">0</h3>
+                            <p>Sesuai</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon notmatch">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="statNotMatchToday">0</h3>
+                            <p>Tidak Sesuai</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-card">
+                        <h3>Performa 7 Hari Terakhir</h3>
+                        <canvas id="weeklyChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Scanner -->
+            <section id="scannerPage" class="content-page active">
+                <div class="page-header">
+                    <h2>Scan QR Code</h2>
+                    <p>Scan unit untuk verifikasi grade</p>
+                </div>
+                <div class="scanner-container">
+                    <div class="scanner-box">
+                        <div id="qrReader"></div>
+                        <div id="scanResult" class="scan-result hidden">
+                            <div class="unit-info">
+                                <h3 id="scannedUnitName">-</h3>
+                                <p id="scannedUnitQR">-</p>
+                                <p id="scannedUnitLocation">-</p>
+                                <p id="scannedUnitGrade">Expected: -</p>
+                            </div>
+                            <div class="grade-check">
+                                <p>Apakah grade unit ini sesuai?</p>
+                                <div class="grade-buttons">
+                                    <button class="btn btn-success" id="btnSesuai">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="20,6 9,17 4,12" />
+                                        </svg>
+                                        Sesuai
+                                    </button>
+                                    <button class="btn btn-danger" id="btnTidakSesuai">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <line x1="18" y1="6" x2="6" y2="18" />
+                                            <line x1="6" y1="6" x2="18" y2="18" />
+                                        </svg>
+                                        Tidak Sesuai
+                                    </button>
+                                </div>
+                                <div class="form-group">
+                                    <label for="scanNotes">Catatan (opsional)</label>
+                                    <textarea id="scanNotes" rows="2" placeholder="Tambahkan catatan..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- History -->
+            <section id="historyPage" class="content-page">
+                <div class="page-header">
+                    <h2>Riwayat Scan</h2>
+                    <p>Daftar scan yang telah dilakukan</p>
+                </div>
+                <div class="filter-bar">
+                    <input type="date" id="filterDate" class="form-control">
+                    <select id="filterMatch" class="form-control">
+                        <option value="">Semua</option>
+                        <option value="true">Sesuai</option>
+                        <option value="false">Tidak Sesuai</option>
+                    </select>
+                    <button class="btn btn-secondary" id="btnFilterHistory">Filter</button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Waktu</th>
+                                <th>Unit</th>
+                                <th>QR Code</th>
+                                <th>Status</th>
+                                <th>Catatan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Units (Admin) -->
+            <section id="unitsPage" class="content-page">
+                <div class="page-header">
+                    <div>
+                        <h2>Kelola Unit</h2>
+                        <p>Daftar unit yang terdaftar</p>
+                    </div>
+                    <button class="btn btn-primary" id="btnAddUnit">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        Tambah Unit
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nama</th>
+                                <th>QR Code</th>
+                                <th>Expected Grade</th>
+                                <th>Lokasi</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="unitsTableBody">
+                        </tbody>
+                    </table>
+                    <!-- Mobile Card View -->
+                    <div class="mobile-card-view" id="unitsMobileCards"></div>
+                </div>
+                <!-- FAB for mobile -->
+                <button class="fab" id="fabAddUnit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                </button>
+            </section>
+
+            <!-- Users (Admin) -->
+            <section id="usersPage" class="content-page">
+                <div class="page-header">
+                    <div>
+                        <h2>Kelola Users</h2>
+                        <p>Daftar pengguna sistem</p>
+                    </div>
+                    <button class="btn btn-primary" id="btnAddUser">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        Tambah User
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Nama</th>
+                                <th>Role</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                        </tbody>
+                    </table>
+                    <!-- Mobile Card View -->
+                    <div class="mobile-card-view" id="usersMobileCards"></div>
+                </div>
+                <!-- FAB for mobile -->
+                <button class="fab" id="fabAddUser">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                </button>
+            </section>
+
+            <!-- Reports (Admin) -->
+            <section id="reportsPage" class="content-page">
+                <div class="page-header">
+                    <h2>Laporan</h2>
+                    <button class="btn btn-primary" id="btnExport">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                            <polyline points="7,10 12,15 17,10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        Export Excel
+                    </button>
+                </div>
+                <div class="report-summary">
+                    <div class="report-card">
+                        <h4>Minggu Ini</h4>
+                        <div class="report-stats">
+                            <div><span id="weekTotal">0</span> Total</div>
+                            <div class="match"><span id="weekMatch">0</span> Sesuai</div>
+                            <div class="notmatch"><span id="weekNotMatch">0</span> Tidak Sesuai</div>
+                        </div>
+                    </div>
+                    <div class="report-card">
+                        <h4>Bulan Ini</h4>
+                        <div class="report-stats">
+                            <div><span id="monthTotal">0</span> Total</div>
+                            <div class="match"><span id="monthMatch">0</span> Sesuai</div>
+                            <div class="notmatch"><span id="monthNotMatch">0</span> Tidak Sesuai</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="user-performance admin-only">
+                    <h3>Performa User</h3>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Total</th>
+                                    <th>Sesuai</th>
+                                    <th>Tidak Sesuai</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userPerformanceBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Modal</h3>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>

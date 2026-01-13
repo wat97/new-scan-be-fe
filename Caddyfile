@@ -1,0 +1,66 @@
+# Domain Configuration
+# Ganti dengan domain Anda
+{$DOMAIN:localhost}
+
+# Redirect HTTP to HTTPS (automatic with Caddy)
+# Caddy akan otomatis generate dan renew SSL certificate dari Let's Encrypt
+
+{$DOMAIN} {
+    # Enable compression
+    encode gzip
+
+    # Serve frontend static files
+    root * /srv/frontend
+    file_server
+
+    # Try index.html for SPA routing
+    try_files {path} /index.html
+
+    # Proxy API requests to backend
+    handle /api/* {
+        reverse_proxy backend:8080
+    }
+
+    # Proxy health check
+    handle /health {
+        reverse_proxy backend:8080
+    }
+
+    # Security headers
+    header {
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        # Remove server header
+        -Server
+    }
+
+    # Cache static assets
+    @static {
+        path *.js *.css *.png *.jpg *.jpeg *.gif *.ico *.svg *.woff *.woff2
+    }
+    header @static Cache-Control "public, max-age=31536000, immutable"
+
+    # Log requests
+    log {
+        output stdout
+        format console
+    }
+}
+
+# Localhost development (no SSL)
+localhost {
+    encode gzip
+    root * /srv/frontend
+    file_server
+    try_files {path} /index.html
+
+    handle /api/* {
+        reverse_proxy backend:8080
+    }
+
+    handle /health {
+        reverse_proxy backend:8080
+    }
+}

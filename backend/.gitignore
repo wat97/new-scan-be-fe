@@ -1,0 +1,22 @@
+# Binaries
+scandata
+*.exe
+
+# Environment
+.env
+
+# Logs
+*.log
+security.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Go
+vendor/

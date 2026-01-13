@@ -1,0 +1,70 @@
+# Scandata Docker Compose Configuration
+
+services:
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: scandata-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-scandata}
+      MYSQL_USER: ${MYSQL_USER:-scandata}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-scandata123}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - scandata-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Go Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: scandata-backend
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: ${MYSQL_USER:-scandata}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-scandata123}
+      DB_NAME: ${MYSQL_DATABASE:-scandata}
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      JWT_EXPIRY_HOURS: ${JWT_EXPIRY_HOURS:-24}
+      SERVER_PORT: 8080
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost,http://localhost:3000,http://localhost:80}
+    ports:
+      - "8080:8080"
+    networks:
+      - scandata-network
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Nginx Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: scandata-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    networks:
+      - scandata-network
+    depends_on:
+      - backend
+
+networks:
+  scandata-network:
+    driver: bridge
+
+volumes:
+  mysql_data:

@@ -1,0 +1,15 @@
+# Dockerfile and nginx config shouldn't be served
+Dockerfile
+nginx.conf
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+
+# Git
+.git
+.gitignore
