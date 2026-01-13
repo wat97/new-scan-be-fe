@@ -46,21 +46,21 @@ services:
         condition: service_healthy
 
   # Nginx Frontend + API Proxy
-  # INI YANG DI-EXPOSE KE COOLIFY (port 80)
+  # Coolify/Traefik will handle external routing - no need to expose port
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: scandata-frontend
     restart: unless-stopped
-    ports:
-      - "80:80"
+    # Don't expose port 80 - Coolify/Traefik handles this
+    expose:
+      - "80"
     networks:
       - scandata-network
     depends_on:
       - backend
     labels:
-      # Coolify akan detect service ini untuk reverse proxy
       - "coolify.managed=true"
 
 networks:
