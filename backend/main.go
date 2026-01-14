@@ -58,7 +58,6 @@ func main() {
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(cfg)
 	userHandler := handlers.NewUserHandler()
-	unitHandler := handlers.NewUnitHandler()
 	scanHandler := handlers.NewScanHandler()
 	reportHandler := handlers.NewReportHandler()
 
@@ -82,19 +81,6 @@ func main() {
 			adminRoutes.GET("/:id", userHandler.Get)
 			adminRoutes.PUT("/:id", userHandler.Update)
 			adminRoutes.DELETE("/:id", userHandler.Delete)
-		}
-
-		// Units (Admin only for CUD, all for Read)
-		protected.GET("/units", unitHandler.List)
-		protected.GET("/units/:id", unitHandler.Get)
-		protected.GET("/units/qr/:qr_code", unitHandler.GetByQRCode)
-
-		unitAdminRoutes := protected.Group("/units")
-		unitAdminRoutes.Use(middleware.AdminMiddleware())
-		{
-			unitAdminRoutes.POST("", unitHandler.Create)
-			unitAdminRoutes.PUT("/:id", unitHandler.Update)
-			unitAdminRoutes.DELETE("/:id", unitHandler.Delete)
 		}
 
 		// Scans

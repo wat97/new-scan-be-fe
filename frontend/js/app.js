@@ -6,7 +6,7 @@ const API_BASE = window.location.hostname === 'localhost' && window.location.por
 let currentUser = null;
 let token = null;
 let qrScanner = null;
-let currentScannedUnit = null;
+let currentScannedBarcode = null;
 let weeklyChart = null;
 
 // ===== Initialization =====
@@ -173,9 +173,6 @@ function navigateTo(page) {
             break;
         case 'history':
             loadHistory();
-            break;
-        case 'units':
-            loadUnits();
             break;
         case 'users':
             loadUsers();
@@ -406,39 +403,26 @@ async function stopScanner() {
     // This prevents repeated permission requests
 }
 
-async function onScanSuccess(qrCode) {
+async function onScanSuccess(barcode) {
     try {
         await qrScanner.stop();
     } catch (e) { }
 
-    try {
-        const response = await apiFetch(`/units/qr/${encodeURIComponent(qrCode)}`);
+    // Simpan barcode yang di-scan untuk digunakan saat submit
+    currentScannedBarcode = barcode;
 
-        if (!response.ok) {
-            showToast('Unit tidak ditemukan', 'error');
-            setTimeout(initScanner, 2000);
-            return;
-        }
+    // Tampilkan hasil scan langsung tanpa lookup unit
+    document.getElementById('scannedUnitName').textContent = barcode;
+    document.getElementById('scannedUnitQR').textContent = 'Barcode berhasil di-scan';
+    document.getElementById('scannedUnitLocation').textContent = '';
+    document.getElementById('scannedUnitGrade').textContent = 'Apakah grade sesuai?';
 
-        const unit = await response.json();
-        currentScannedUnit = unit;
-
-        document.getElementById('scannedUnitName').textContent = unit.name;
-        document.getElementById('scannedUnitQR').textContent = `QR: ${unit.qr_code}`;
-        document.getElementById('scannedUnitLocation').textContent = `Lokasi: ${unit.location || '-'}`;
-        document.getElementById('scannedUnitGrade').textContent = `Expected Grade: ${unit.expected_grade || '-'}`;
-
-        document.getElementById('scanResult').classList.remove('hidden');
-        document.getElementById('scanNotes').value = '';
-
-    } catch (error) {
-        showToast('Error mengambil data unit', 'error');
-        setTimeout(initScanner, 2000);
-    }
+    document.getElementById('scanResult').classList.remove('hidden');
+    document.getElementById('scanNotes').value = '';
 }
 
 async function submitScan(isMatch) {
-    if (!currentScannedUnit) return;
+    if (!currentScannedBarcode) return;
 
     const notes = document.getElementById('scanNotes').value;
 
@@ -446,7 +430,7 @@ async function submitScan(isMatch) {
         const response = await apiFetch('/scans', {
             method: 'POST',
             body: JSON.stringify({
-                qr_code: currentScannedUnit.qr_code,
+                barcode: currentScannedBarcode,
                 is_match: isMatch,
                 notes: notes
             })
@@ -454,7 +438,7 @@ async function submitScan(isMatch) {
 
         if (response.ok) {
             showToast(isMatch ? 'Ditandai SESUAI' : 'Ditandai TIDAK SESUAI', 'success');
-            currentScannedUnit = null;
+            currentScannedBarcode = null;
             document.getElementById('scanResult').classList.add('hidden');
             setTimeout(initScanner, 1500);
         } else {
@@ -484,13 +468,13 @@ async function loadHistory() {
         tbody.innerHTML = scans.map(scan => `
             <tr>
                 <td>${formatDateTime(scan.scanned_at)}</td>
-                <td>${scan.unit?.name || '-'}</td>
-                <td>${scan.unit?.qr_code || '-'}</td>
+                <td>${scan.barcode || '-'}</td>
                 <td>
                     <span class="badge ${scan.is_match ? 'badge-success' : 'badge-danger'}">
                         ${scan.is_match ? 'Sesuai' : 'Tidak Sesuai'}
                     </span>
                 </td>
+                <td>${scan.user?.name || '-'}</td>
                 <td>${scan.notes || '-'}</td>
             </tr>
         `).join('');
@@ -500,218 +484,6 @@ async function loadHistory() {
     }
 }
 
-// ===== Units =====
-async function loadUnits() {
-    try {
-        const response = await apiFetch('/units');
-        const units = await response.json();
-
-        // Desktop table view
-        const tbody = document.getElementById('unitsTableBody');
-        tbody.innerHTML = units.map(unit => `
-            <tr>
-                <td>${unit.name}</td>
-                <td>${unit.qr_code}</td>
-                <td>${unit.expected_grade || '-'}</td>
-                <td>${unit.location || '-'}</td>
-                <td>
-                    <span class="badge ${unit.is_active ? 'badge-success' : 'badge-danger'}">
-                        ${unit.is_active ? 'Aktif' : 'Nonaktif'}
-                    </span>
-                </td>
-                <td class="action-buttons">
-                    <button class="btn btn-sm btn-secondary" onclick="editUnit(${unit.id})">Edit</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteUnit(${unit.id})">Hapus</button>
-                </td>
-            </tr>
-        `).join('');
-
-        // Mobile card view
-        const mobileCards = document.getElementById('unitsMobileCards');
-        if (mobileCards) {
-            if (units.length === 0) {
-                mobileCards.innerHTML = `
-                    <div class="empty-state">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
-                        </svg>
-                        <h3>Belum ada unit</h3>
-                        <p>Tap tombol + untuk menambahkan unit baru</p>
-                    </div>
-                `;
-            } else {
-                mobileCards.innerHTML = units.map(unit => `
-                    <div class="mobile-data-card" onclick="editUnit(${unit.id})">
-                        <div class="mobile-card-header">
-                            <div>
-                                <div class="mobile-card-title">${unit.name}</div>
-                                <div class="mobile-card-subtitle">${unit.qr_code}</div>
-                            </div>
-                            <span class="badge ${unit.is_active ? 'badge-success' : 'badge-danger'}">
-                                ${unit.is_active ? 'Aktif' : 'Nonaktif'}
-                            </span>
-                        </div>
-                        <div class="mobile-card-body">
-                            <div class="mobile-card-row">
-                                <span class="mobile-card-label">Grade</span>
-                                <span class="mobile-card-value">${unit.expected_grade || '-'}</span>
-                            </div>
-                            <div class="mobile-card-row">
-                                <span class="mobile-card-label">Lokasi</span>
-                                <span class="mobile-card-value">${unit.location || '-'}</span>
-                            </div>
-                        </div>
-                        <div class="mobile-card-actions">
-                            <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); editUnit(${unit.id})">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                </svg>
-                                Edit
-                            </button>
-                            <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteUnit(${unit.id})">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                                    <polyline points="3,6 5,6 21,6" />
-                                    <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                                </svg>
-                                Hapus
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
-            }
-        }
-
-    } catch (error) {
-        console.error('Error loading units:', error);
-    }
-}
-
-function showAddUnitModal() {
-    document.getElementById('modalTitle').textContent = 'Tambah Unit';
-    document.getElementById('modalBody').innerHTML = `
-        <form id="unitForm">
-            <div class="form-group">
-                <label>Nama Unit</label>
-                <input type="text" name="name" required placeholder="Nama unit">
-            </div>
-            <div class="form-group">
-                <label>QR Code</label>
-                <input type="text" name="qr_code" required placeholder="Value QR code">
-            </div>
-            <div class="form-group">
-                <label>Expected Grade</label>
-                <input type="text" name="expected_grade" placeholder="Grade yang diharapkan">
-            </div>
-            <div class="form-group">
-                <label>Lokasi</label>
-                <input type="text" name="location" placeholder="Lokasi unit">
-            </div>
-            <button type="submit" class="btn btn-primary btn-block">Simpan</button>
-        </form>
-    `;
-
-    document.getElementById('unitForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-
-        try {
-            const response = await apiFetch('/units', {
-                method: 'POST',
-                body: JSON.stringify(Object.fromEntries(formData))
-            });
-
-            if (response.ok) {
-                showToast('Unit berhasil ditambahkan', 'success');
-                closeModal();
-                loadUnits();
-            } else {
-                const data = await response.json();
-                showToast(data.error || 'Error', 'error');
-            }
-        } catch (error) {
-            showToast('Error', 'error');
-        }
-    });
-
-    openModal();
-}
-
-async function editUnit(id) {
-    try {
-        const response = await apiFetch(`/units/${id}`);
-        const unit = await response.json();
-
-        document.getElementById('modalTitle').textContent = 'Edit Unit';
-        document.getElementById('modalBody').innerHTML = `
-            <form id="unitForm">
-                <div class="form-group">
-                    <label>Nama Unit</label>
-                    <input type="text" name="name" value="${unit.name}" required placeholder="Nama unit">
-                </div>
-                <div class="form-group">
-                    <label>QR Code</label>
-                    <input type="text" name="qr_code" value="${unit.qr_code}" required placeholder="Value QR code">
-                </div>
-                <div class="form-group">
-                    <label>Expected Grade</label>
-                    <input type="text" name="expected_grade" value="${unit.expected_grade || ''}" placeholder="Grade yang diharapkan">
-                </div>
-                <div class="form-group">
-                    <label>Lokasi</label>
-                    <input type="text" name="location" value="${unit.location || ''}" placeholder="Lokasi unit">
-                </div>
-                <button type="submit" class="btn btn-primary btn-block">Update</button>
-            </form>
-        `;
-
-        document.getElementById('unitForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-
-            try {
-                const response = await apiFetch(`/units/${id}`, {
-                    method: 'PUT',
-                    body: JSON.stringify(Object.fromEntries(formData))
-                });
-
-                if (response.ok) {
-                    showToast('Unit berhasil diupdate', 'success');
-                    closeModal();
-                    loadUnits();
-                } else {
-                    const data = await response.json();
-                    showToast(data.error || 'Error', 'error');
-                }
-            } catch (error) {
-                showToast('Error', 'error');
-            }
-        });
-
-        openModal();
-
-    } catch (error) {
-        showToast('Error', 'error');
-    }
-}
-
-async function deleteUnit(id) {
-    if (!confirm('Yakin ingin menghapus unit ini?')) return;
-
-    try {
-        const response = await apiFetch(`/units/${id}`, { method: 'DELETE' });
-
-        if (response.ok) {
-            showToast('Unit berhasil dihapus', 'success');
-            loadUnits();
-        } else {
-            const data = await response.json();
-            showToast(data.error || 'Error', 'error');
-        }
-    } catch (error) {
-        showToast('Error', 'error');
-    }
-}
 
 // ===== Users =====
 async function loadUsers() {
